@@ -1,8 +1,10 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System;
+
 public enum InteractionEventType
 {
-    OnMouseEnter,OnMouseExit,RightClick,LeftClick
+    OnMouseEnter, OnMouseExit, RightClick, LeftClick
 }
 public class InteractionEvent
 {
@@ -10,12 +12,12 @@ public class InteractionEvent
     public Unit targetUnit;
     public Vector3 targetPoint;
     public GameObject targetObject;
-   
+
     public InteractionEvent(InteractionEventType type, Unit targetUnit, Vector3 targetPoint)
     {
         this.type = type;
         this.targetUnit = targetUnit;
-        this.targetPoint = targetPoint;        
+        this.targetPoint = targetPoint;
     }
     public InteractionEvent(InteractionEventType type, Unit targetUnit)
     {
@@ -40,7 +42,7 @@ public class InteractionEvent
     }
     public override string ToString()
     {
-        return this.type+"-"+this.targetUnit + "-" + this.targetObject+"-"+this.targetPoint;
+        return this.type + "-" + this.targetUnit + "-" + this.targetObject + "-" + this.targetPoint;
     }
 }
 
@@ -48,6 +50,54 @@ public delegate void PlayerInteractorHandler(InteractionEvent interactionEvent);
 enum InteractionStatus
 {
     NORMAL, TARGET_SELECT, AOE_SELECT
+}
+
+class SkillSelector : Action
+{
+    internal SkillSelectMode skillSelectMode;
+    internal bool enabled;
+    Skill skill;
+    bool done = false;
+    public void abort()
+    {
+
+    }
+
+    public void select(Unit selectTargetUnit, Vector3 selectTargetPoint)
+    {
+        skill.setSkillTarget(selectTargetUnit, selectTargetPoint);
+        enabled = false;
+        done = true;
+        Cursor.visible = true;
+    }
+
+    public bool isDone()
+    {
+        return done;
+    }
+
+    public void pause()
+    {
+
+    }
+
+    public void resumue()
+    {
+
+    }
+    public void init(Skill skill,SkillSelectMode skillSelectMode )
+    {
+        this.skillSelectMode = skillSelectMode;
+        this.skill = skill;
+        enabled = true;
+        done = false;
+        if (skillSelectMode == SkillSelectMode.Ground || skillSelectMode == SkillSelectMode.Unit)
+        {
+            Cursor.SetCursor(PlayerInteractor.Instance.m_select, Vector2.zero, CursorMode.ForceSoftware);
+        }
+
+    }
+
 }
 
 /// <summary>
@@ -59,21 +109,20 @@ public class PlayerInteractor : MonoBehaviour
     public Texture2D m_pointer;
     public Texture2D m_attack;
     public Texture2D m_select;
-    
+
     public float smooth = 4f;
     Shader rimLight;
-    
-    bool needDetect = true;
-    bool forceDetect = false;
+    SkillSelector skillSelector=new SkillSelector();
+
     InteractionStatus interactionStatus = InteractionStatus.NORMAL;
-  
+
     public event PlayerInteractorHandler MouseEnterUnit;
     public event PlayerInteractorHandler MouseExitUnit;
     public event PlayerInteractorHandler ClickUnit;
     public event PlayerInteractorHandler MouseEnterObject;
     public event PlayerInteractorHandler MouseExitObject;
     public event PlayerInteractorHandler ClickObject;
-    Vector3 hitPoint;
+   
     public static PlayerInteractor Instance
     {
         get;
@@ -104,152 +153,116 @@ public class PlayerInteractor : MonoBehaviour
 
     }
 
-  
-
-    // Update is called once per frame
-    void LateUpdate()
+    Skill skill=new Skill();
+    void Update()
     {
         if (Input.GetKey("e"))
         {
-            interactionStatus = InteractionStatus.AOE_SELECT;
-            forceDetect = true;
+            ActionManager.excuteAction(test(skill, SkillSelectMode.AOE));
         }
-        if (forceDetect)
+        else if (Input.GetKey("a"))
         {
-
+            ActionManager.excuteAction(test(skill, SkillSelectMode.Unit));
+        }
+    }
+    IEnumerator test(Skill skill, SkillSelectMode skillSelectMode)
+    {
+        yield return PlayerInteractor.SkillSelect(skill, skillSelectMode);
+        Debug.Log("select target is" + skill.skillTarget);
+    }
+    // Update is called once per frame
+    void LateUpdate()
+    {
+        
+        RaycastHit hit = new RaycastHit();
+        Ray ray;
+       
+        if (skillSelector.enabled && skillSelector.skillSelectMode == SkillSelectMode.AOE)
+        {
+            ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+            Physics.Raycast(ray, out hit, 100, LayerMask.GetMask("Terrain"));
             Cursor.visible = false;
-            Vector3 targetPositon = new Vector3(hitPoint.x, gameObject.transform.position.y, hitPoint.z);
+            Vector3 targetPositon = new Vector3(hit.point.x, gameObject.transform.position.y, hit.point.z);
             gameObject.transform.position = Vector3.Lerp(gameObject.transform.position, targetPositon, Time.deltaTime * smooth);
         }
+
         bool leftMouseButtonDown = Input.GetMouseButtonDown(0);
         bool rightMouseButtonDown = Input.GetMouseButtonDown(1);
         if (leftMouseButtonDown || rightMouseButtonDown)
         {
-            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-            RaycastHit hit;
-            //判断射线是否发生碰撞                
-            if (Physics.Raycast(ray, out hit, 100))
+            InteractionEventType iet = leftMouseButtonDown ? InteractionEventType.LeftClick : InteractionEventType.RightClick;
+            if (!skillSelector.enabled || skillSelector.skillSelectMode != SkillSelectMode.AOE)
             {
-                hitPoint = hit.point;
+                ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+                Physics.Raycast(ray, out hit, 100, LayerMask.GetMask("Terrain", "Unit"));
+                
                 Unit hitUnit = UnitManager.getUnit(hit.collider.gameObject);
                 if (hitUnit)
                 {
-                    if (ClickUnit != null) {
-                        ClickUnit(new InteractionEvent(leftMouseButtonDown ? InteractionEventType.LeftClick : InteractionEventType.RightClick, hitUnit, hit.point));
-                    }
+                    if (ClickUnit != null) ClickUnit(new InteractionEvent(iet, hitUnit, hit.point));
+
                 }
                 else
                 {
-                    if (ClickObject != null)
-                    {
-                        ClickObject(new InteractionEvent(leftMouseButtonDown ? InteractionEventType.LeftClick : InteractionEventType.RightClick, hit.collider.gameObject, hitPoint));
-                    }
+                    if (ClickObject != null) ClickObject(new InteractionEvent(iet, hit.collider.gameObject, hit.point));
+
                 }
             }
-              
-        }
-       
-    }
-    void FixedUpdate()
-    {
-        if (needDetect || forceDetect)
-        {
-            switch (interactionStatus)
+            else
             {
-                case InteractionStatus.NORMAL:
-                    doNormalDetect();
-                    break;
-                case InteractionStatus.TARGET_SELECT:
-                    doTargetSelectDetect();
-                    break;
-                case InteractionStatus.AOE_SELECT:
-                    doAoeTargetSelectDetect();
-
-                    break;
+                skillSelector.select(null, hit.point);
             }
+
+
         }
-    }
-    void doNormalDetect()
-    {
-            
-       
-    }
-
-    void doTargetSelectDetect()
-    {
 
     }
-    void doAoeTargetSelectDetect()
-    {
-        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-        RaycastHit hit;
-        //判断射线是否发生碰撞                
-        if (Physics.Raycast(ray, out hit, 100, LayerMask.GetMask("Terrain")))
-        {
-            hitPoint = hit.point;
 
-            //gameObject.transform.position.z = hit.point.z;
-        }
-    }
+
     public static void doMouseEnterUnit(Unit targetUnit)
     {
-        if (Instance.MouseEnterUnit != null)
-        {
-            Instance.MouseEnterUnit(new InteractionEvent(InteractionEventType.OnMouseEnter, targetUnit));
-        }
+        if (Instance.MouseEnterUnit != null) Instance.MouseEnterUnit(new InteractionEvent(InteractionEventType.OnMouseEnter, targetUnit));
     }
 
     public static void doMouseExitUnit(Unit targetUnit)
     {
-        if (Instance.MouseExitUnit != null)
-        {
-            Instance.MouseExitUnit(new InteractionEvent(InteractionEventType.OnMouseExit, targetUnit));
-        }
+        if (Instance.MouseExitUnit != null) Instance.MouseExitUnit(new InteractionEvent(InteractionEventType.OnMouseExit, targetUnit));
     }
-    public static void doClickUnit(InteractionEventType iet,Unit targetUnit,Vector3 clickPoint)
+    public static void doClickUnit(InteractionEventType iet, Unit targetUnit, Vector3 clickPoint)
     {
-        if (Instance.ClickUnit != null)
-        {
-            Instance.ClickUnit(new InteractionEvent(iet, targetUnit, clickPoint));
-        }
+        if (Instance.ClickUnit != null) Instance.ClickUnit(new InteractionEvent(iet, targetUnit, clickPoint));
     }
 
     public static void doMouseEnterObject(GameObject targetObject)
     {
-        if (Instance.MouseEnterObject != null)
-        {
-            Instance.MouseEnterObject(new InteractionEvent(InteractionEventType.OnMouseEnter, targetObject));
-        }
+        if (Instance.MouseEnterObject != null) Instance.MouseEnterObject(new InteractionEvent(InteractionEventType.OnMouseEnter, targetObject));
     }
     public static void doMouseExitObject(GameObject targetObject)
     {
-        if (Instance.MouseExitObject != null)
-        {
-            Instance.MouseExitObject(new InteractionEvent(InteractionEventType.OnMouseExit, targetObject));
-        }
+        if (Instance.MouseExitObject != null) Instance.MouseExitObject(new InteractionEvent(InteractionEventType.OnMouseExit, targetObject));
     }
     public static void doClickObject(InteractionEventType iet, GameObject targetUnit, Vector3 clickPoint)
     {
-        if (Instance.MouseExitObject != null)
-        {
-            Instance.MouseExitObject(new InteractionEvent(iet, targetUnit, clickPoint));
-        }
+        if (Instance.MouseExitObject != null) Instance.MouseExitObject(new InteractionEvent(iet, targetUnit, clickPoint));
     }
-
-
-
 
 
     void onMouseEnterUnit(InteractionEvent e)
     {
-
-        if (PlayerManager.isOpponent(PlayerManager.localPlayer, e.targetUnit.player))
+        if (skillSelector.skillSelectMode == SkillSelectMode.Ground || skillSelector.skillSelectMode == SkillSelectMode.Unit)
         {
-            Cursor.SetCursor(m_attack, Vector2.zero, CursorMode.ForceSoftware);
+            Cursor.SetCursor(m_select, Vector2.zero, CursorMode.ForceSoftware);
         }
         else
         {
-            Cursor.SetCursor(m_pointer, Vector2.zero, CursorMode.ForceSoftware);
+            if (PlayerManager.isOpponent(PlayerManager.localPlayer, e.targetUnit.player))
+            {
+                Cursor.SetCursor(m_attack, Vector2.zero, CursorMode.ForceSoftware);
+            }
+            else
+            {
+                Cursor.SetCursor(m_pointer, Vector2.zero, CursorMode.ForceSoftware);
+            }
         }
         //    Renderer renderer = e.target.GetComponentInChildren<Renderer>();
         //    Debug.Log("over:"+renderer.material.shader.name);
@@ -262,10 +275,16 @@ public class PlayerInteractor : MonoBehaviour
     void onMouseEnterObject(InteractionEvent e)
     {
 
-      
-       
+        if (skillSelector.skillSelectMode == SkillSelectMode.Ground || skillSelector.skillSelectMode == SkillSelectMode.Unit)
+        {
+            Cursor.SetCursor(m_select, Vector2.zero, CursorMode.ForceSoftware);
+        }
+        else
+        {
             Cursor.SetCursor(m_pointer, Vector2.zero, CursorMode.ForceSoftware);
+        }
         
+
         //    Renderer renderer = e.target.GetComponentInChildren<Renderer>();
         //    Debug.Log("over:"+renderer.material.shader.name);
         //    if (renderer)
@@ -285,8 +304,9 @@ public class PlayerInteractor : MonoBehaviour
     //        renderer.material.shader = hoveredTargetShader;
     //    }
     //}
-    public static Action SkillSelect(SkillSelectMode skillSelectMode)
+    public static Action SkillSelect(Skill skill,SkillSelectMode skillSelectMode)
     {
-        return null;
+        Instance.skillSelector.init(skill, skillSelectMode);
+        return Instance.skillSelector;
     }
 }

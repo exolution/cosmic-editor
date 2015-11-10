@@ -138,12 +138,12 @@ public class MotionController : MonoBehaviour
         {
             motionAgent = new MotionAgent(subject, targetPoint);
             motionAgent.navMeshObstacle.enabled = false;
-            Debug.Log(1 + "" + motionAgent.navMeshObstacle.enabled);
+           
            
             yield return null;
-            Debug.Log(2+""+ motionAgent.navMeshObstacle.enabled);
+           
             yield return null;
-            Debug.Log(3 + "" + motionAgent.navMeshObstacle.enabled);
+           
             motionAgent.navMeshAgent.enabled = true;
             Instance.map.Add(subject.GetHashCode(), motionAgent);
         }

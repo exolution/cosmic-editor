@@ -1,22 +1,38 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using System;
+/// <summary>
+/// 一系列异步过程的抽象 
+/// 一个Action代表一个有序的动作集合
+/// </summary>
 public interface Action
 {
     bool isDone();
     void pause();
     void resumue();
-    void finish();
+    void abort();
 }
 
 public class ActionManager : MonoBehaviour {
 
-
-	class ActionExecutor:Action
+    /// <summary>
+    /// 核心类 action执行器
+    /// 为了递归,使得action执行器也可以被yield, 所以本身也是一个action
+    /// Action是包含了一系列enumerator的栈式层级结构 enumerator其实就是一系列步骤的描述
+    /// 原理很简单 
+    /// 每帧不断执行这一个系列的enumerator，每次执行到一个yield return 监测yield出的值。
+    /// yield值是同步值 则立即执行后续代码到下一个yield 
+    /// yield值是异步值（一个Action） 则一直检测Action.isDone();true则执行后续代码到下一个yield
+    /// yield值是一个enumerator 当前enumerator入栈 上下文切换到enumerator执行上述操作 
+    /// 当enumerator执行完毕 检查栈中是否还有enumerator 如果有则出栈继续执行 如果没有 整个操作结束 设置本身的isDone 为true 
+    /// </summary>
+    class ActionExecutor :Action
     {
         IEnumerator enumerator;
         ActionExecutor parent;
 		bool done=false;
+        bool aborted = false;
         public ActionExecutor(IEnumerator enumerator,ActionExecutor parent=null)
         {
             this.enumerator = enumerator;
@@ -26,6 +42,7 @@ public class ActionManager : MonoBehaviour {
         {
             
             bool flag;
+            if (aborted) return false;
             object current = this.enumerator.Current;
             if(current is Action)
             {
@@ -71,6 +88,11 @@ public class ActionManager : MonoBehaviour {
         public void finish(){
 			done = true;
 		}
+
+        public void abort()
+        {
+            
+        }
     }
 
 

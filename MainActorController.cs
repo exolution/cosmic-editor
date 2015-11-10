@@ -31,13 +31,7 @@ public class MainActorController : MonoBehaviour
     NavMeshAgent navAgent;
 
 
-    IEnumerator abc()
-    {
-        Debug.Log(11);
-        yield return 1;
-        Debug.Log(2);
-        yield return 2;
-    }
+   
     // Use this for initialization
     void Start()
     {
@@ -50,7 +44,7 @@ public class MainActorController : MonoBehaviour
         navAgent = GetComponent<NavMeshAgent>();
         Shader.WarmupAllShaders();
 
-        abc().MoveNext();
+       
         
     }
     IEnumerator move(GameObject subject,Vector3 targetPoint)
@@ -131,6 +125,7 @@ public class MainActorController : MonoBehaviour
     }
     IEnumerator follow()
     {
+        return null;
         //yield return MotionController.followUnit(target, this);
     }
     void LateUpdate()
