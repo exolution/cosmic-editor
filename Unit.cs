@@ -25,8 +25,23 @@ public class Unit : MonoBehaviour
     void Start()
     {
         mc_animator = GetComponent<Animator>();
+        animationManager = new AnimationManager(mc_animator);
         PlayerInteractor.Instance.ClickObject += onclickGround;
         PlayerInteractor.Instance.ClickUnit += onclickGround;
+
+    }
+    void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.Q))
+        {
+            mc_animator.SetInteger("idle", 1);
+            //animationManager.playAnimation("idle1");
+        }
+        if (Input.GetKeyDown(KeyCode.W))
+        {
+            mc_animator.SetInteger("idle", 0);
+            //animationManager.playAnimation("idle1");
+        }
 
     }
     void onclickGround(InteractionEvent interactionEvent)
@@ -41,7 +56,7 @@ public class Unit : MonoBehaviour
 
     void OnMouseExit()
     {
-        Debug.Log(111);
+        
          PlayerInteractor.doMouseExitUnit(this);
     }
     public IEnumerator followUnit(Unit target,float distace = 2f)

@@ -64,7 +64,7 @@ public class ActionManager : MonoBehaviour {
             }
            else
             {
-                Debug.Log("run");
+               
                 flag = this.enumerator.MoveNext();
             }
             if (!flag&&this.parent!=null)
@@ -123,7 +123,7 @@ public class ActionManager : MonoBehaviour {
     }
 
 	void LateUpdate () {
-        Debug.Log("late");
+
         for(int i = 0; i < executorList.Count; i++)
         {
             if (!executorList[i].run()) {

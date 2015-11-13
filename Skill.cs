@@ -213,7 +213,7 @@ public class Skill_Attack:Skill
         yield return source.followUnit(skillTarget.getTarget(),skillRange);
         
         //播放角色的攻击动画 至伤害关键帧（俗称前摇）
-        yield return source.animationManager.playAnimationAtFrame("attack", 10);
+        //yield return source.animationManager.playAnimationAtFrame("attack", 10);
         
         //调用命中过程 并计算伤害
         yield return hit();
