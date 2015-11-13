@@ -59,7 +59,7 @@ public class AnimationManager  {
     }
     public Action playAnimation(string animationName)
     {
-        animator.CrossFade(animationName, 0.1f);
+        animator.CrossFade(animationName, 0.02f);
         animationAction.init(animationName);
         return animationAction;
     }

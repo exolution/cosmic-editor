@@ -34,8 +34,8 @@ public class Unit : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.Q))
         {
-            mc_animator.SetInteger("idle", 1);
-            //animationManager.playAnimation("idle1");
+           // mc_animator.SetInteger("idle", 1);
+            animationManager.playAnimation("attack");
         }
         if (Input.GetKeyDown(KeyCode.W))
         {
