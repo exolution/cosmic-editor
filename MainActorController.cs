@@ -39,7 +39,7 @@ public class MainActorController : MonoBehaviour
         m_animator = GetComponent<Animator>();
         damageController = GetComponent<DamageController>();
         AttackBehaviour ab = m_animator.GetBehaviour<AttackBehaviour>();
-        ab.damageController = damageController;
+        //ab.damageController = damageController;
         target = GameObject.Find("ashe");
         navAgent = GetComponent<NavMeshAgent>();
         Shader.WarmupAllShaders();
@@ -77,7 +77,7 @@ public class MainActorController : MonoBehaviour
                     Destroy(Instantiate(targetCircle, new Vector3(m_targetPoint.x, 0.01f, m_targetPoint.z), new Quaternion(0, 0, 0, 0)), 1);
                     //transform.LookAt(m_targetPoint);
                    
-                    ActionManager.excuteAction(move(gameObject,hit.point));
+                   // ActionManager.excuteAction(move(gameObject,hit.point));
                     //ActionManager.excuteAction(move(target,hit.point+ new Vector3(2, 0, 2)));
 
 

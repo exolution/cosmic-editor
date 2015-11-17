@@ -9,7 +9,7 @@ public enum UnitType
 public class Unit : MonoBehaviour
 {
 
-    Animator mc_animator;
+    public Animator animator;
 
     public AnimationManager animationManager;
     public Dictionary<int, Skill> skillDictionary = new Dictionary<int, Skill>();
@@ -24,29 +24,19 @@ public class Unit : MonoBehaviour
 
     void Start()
     {
-        mc_animator = GetComponent<Animator>();
-        animationManager = new AnimationManager(mc_animator);
-        PlayerInteractor.Instance.ClickObject += onclickGround;
-        PlayerInteractor.Instance.ClickUnit += onclickGround;
+        animator = GetComponent<Animator>();
+        animationManager = new AnimationManager(animator);
+       
 
     }
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Q))
-        {
-           // mc_animator.SetInteger("idle", 1);
-            animationManager.playAnimation("attack");
-        }
-        if (Input.GetKeyDown(KeyCode.W))
-        {
-            mc_animator.SetInteger("idle", 0);
-            //animationManager.playAnimation("idle1");
-        }
+       
 
     }
-    void onclickGround(InteractionEvent interactionEvent)
+    public void onclickGround(InteractionEvent interactionEvent)
     {
-        Debug.Log(interactionEvent);
+        move(interactionEvent.targetPoint);
     }
     void OnMouseEnter()
     {
@@ -59,7 +49,17 @@ public class Unit : MonoBehaviour
         
          PlayerInteractor.doMouseExitUnit(this);
     }
-    public IEnumerator followUnit(Unit target,float distace = 2f)
+    public Action move(Vector3 targetPoint)
+    {
+        return ActionManager.excuteAction(moveAction(targetPoint));
+    }
+    public IEnumerator moveAction(Vector3 targetPoint)
+    {
+        animationManager.playAnimation("Run");
+        yield return MotionController.moveToPoint(gameObject, targetPoint);
+        animationManager.playAnimation("Idle.idle1");
+    }
+    public IEnumerator followUnitAction(Unit target,float distace = 2f)
     {
         yield return MotionController.followUnit(gameObject, target.gameObject, distace);
     }

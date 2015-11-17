@@ -109,7 +109,7 @@ public class PlayerInteractor : MonoBehaviour
     public Texture2D m_pointer;
     public Texture2D m_attack;
     public Texture2D m_select;
-
+    PlayerInfo currentPlayerInfo;
     public float smooth = 4f;
     Shader rimLight;
     SkillSelector skillSelector=new SkillSelector();
@@ -135,6 +135,9 @@ public class PlayerInteractor : MonoBehaviour
         {
             Instance = this;
             PlayerManager.init();
+            currentPlayerInfo = PlayerManager.getCurrentPlayerInfo();
+            ClickObject += currentPlayerInfo.selectUnit.onclickGround;
+            //PlayerInteractor.Instance.ClickUnit += currentPlayerInfo.selectUnit.onclickGround;
         }
         else
         {
@@ -163,6 +166,18 @@ public class PlayerInteractor : MonoBehaviour
         else if (Input.GetKey("a"))
         {
             ActionManager.excuteAction(test(skill, SkillSelectMode.Unit));
+        }
+        if (Input.GetKeyDown(KeyCode.Q))
+        {
+            // mc_animator.SetInteger("idle", 1);
+            //currentPlayerInfo.selectUnit.animator.SetInteger("attack",1);
+            currentPlayerInfo.selectUnit.animationManager.playAnimation("Run");
+
+        }
+        if (Input.GetKeyDown(KeyCode.W))
+        {
+            //mc_animator.SetInteger("idle", 0);
+            //animationManager.playAnimation("idle1");
         }
     }
     IEnumerator test(Skill skill, SkillSelectMode skillSelectMode)
@@ -255,7 +270,7 @@ public class PlayerInteractor : MonoBehaviour
         }
         else
         {
-            if (PlayerManager.isOpponent(PlayerManager.localPlayer, e.targetUnit.player))
+            if (PlayerManager.isOpponent(PlayerManager.currentPlayer, e.targetUnit.player))
             {
                 Cursor.SetCursor(m_attack, Vector2.zero, CursorMode.ForceSoftware);
             }

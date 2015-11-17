@@ -210,7 +210,7 @@ public class Skill_Attack:Skill
         skillTarget.catchTarget(this);
         
         //如果离目标过远则跟随目标直到技能范围满足
-        yield return source.followUnit(skillTarget.getTarget(),skillRange);
+        yield return source.followUnitAction(skillTarget.getTarget(),skillRange);
         
         //播放角色的攻击动画 至伤害关键帧（俗称前摇）
         //yield return source.animationManager.playAnimationAtFrame("attack", 10);

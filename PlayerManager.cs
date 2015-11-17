@@ -8,6 +8,7 @@ public class PlayerInfo
 {
     static int uuid = 0;
     public string name;
+    public Unit selectUnit;
     public int id
     {
         get;
@@ -47,12 +48,13 @@ public enum Player
 }
 public static class PlayerManager{
     static PlayerInfo[] playerInfoList = new PlayerInfo[10];
-    public static Player localPlayer;
+    public static Player currentPlayer;
     public static void init()
     {
-        localPlayer = Player.Player1;
+        currentPlayer = Player.Player1;
         playerInfoList[0] = new PlayerInfo("中立",Fraction.Blue);
         playerInfoList[1] = new PlayerInfo(Fraction.Blue);
+        playerInfoList[1].selectUnit =UnitManager.getUnit(GameObject.Find("MainPlayer"));
         playerInfoList[2] = new PlayerInfo(Fraction.Red);
       
     }
@@ -71,6 +73,10 @@ public static class PlayerManager{
     public static PlayerInfo getPlayerInfo(Player player)
     {
         return playerInfoList[(int)player];
+    }
+    public static PlayerInfo getCurrentPlayerInfo()
+    {
+        return playerInfoList[(int)currentPlayer];
     }
 
 }

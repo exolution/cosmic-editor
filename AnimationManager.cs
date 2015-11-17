@@ -41,14 +41,81 @@ public class AnimationAction : Action
         throw new NotImplementedException();
     }
 }
+delegate void SetValueProxy(String name, object value);
+abstract class ParameterResolver
+{
+    protected AnimatorControllerParameter parameter;
+    public virtual void resolve(Animator animator,AnimatorStateInfo stateInfo)
+    {
+        if (stateInfo.IsName("Base."+parameter.name))
+        {
+            Debug.Log("isName:" + parameter.name);
+            setValue(animator);
+        }
+    }   
+    protected abstract void setValue(Animator animator);
+}
+class BoolParameterResolver : ParameterResolver
+{
+    protected override void setValue(Animator animator)
+    {
+        animator.SetBool(parameter.name, true);
+    }
+    public BoolParameterResolver(AnimatorControllerParameter parameter)
+    {
+        this.parameter = parameter;
+    }
+}
+class IntegerParameterResolver : ParameterResolver
+{
+    int max;
+    int prev=1;
+    public override void resolve(Animator animator, AnimatorStateInfo stateInfo)
+    {
+        if (stateInfo.IsName("Base." + parameter.name+prev))
+        {
+            Debug.Log("isName:"+ parameter.name);
+            setValue(animator);
+        }
+    }
+    protected override void setValue(Animator animator)
+    {
+
+        int r = UnityEngine.Random.Range(1, max+1);
+        prev = r;
+        Debug.Log("random=" + prev + ",max=" + max);
+        animator.SetInteger(parameter.name, prev);
+    }
+    public IntegerParameterResolver(AnimatorControllerParameter parameter,Animator animator)
+    {
+        this.parameter = parameter;
+        max = parameter.defaultInt;
+        animator.SetInteger(parameter.name, 0);
+    }
+}
 public class AnimationManager  {
-    static Dictionary<Animator, AnimationAction> animationActionTable = new Dictionary<Animator, AnimationAction>();
+
+    static Dictionary<Animator, AnimationManager> animationManagerTable = new Dictionary<Animator, AnimationManager>();
     Animator animator;
+    ParameterResolver []parameterResolver=new ParameterResolver[20];//fixme magic number 20
     AnimationAction animationAction=new AnimationAction();
     public AnimationManager(Animator animator)
     {
         this.animator = animator;
-        animationActionTable.Add(animator, animationAction);
+        AnimatorControllerParameter []parameters = animator.parameters;
+        for (int i=0;i< parameters.Length&&i<20; i++)
+        {
+            if (parameters[i].type == AnimatorControllerParameterType.Bool)
+            {
+                parameterResolver[i] = new BoolParameterResolver(parameters[i]);
+            }
+            else if (parameters[i].type == AnimatorControllerParameterType.Int)
+            {
+                parameterResolver[i] = new IntegerParameterResolver(parameters[i],animator);
+            }
+        }
+
+        animationManagerTable.Add(animator, this);
     }
     public Action playAnimationAtFrame(string animationName,int whichFrame, AtAnimationFrame atAnimationFrame)
     {
@@ -59,13 +126,27 @@ public class AnimationManager  {
     }
     public Action playAnimation(string animationName)
     {
-        animator.CrossFade(animationName, 0.02f);
+        animator.SetInteger("Idle.idle", 0);
+        animator.CrossFade(animationName, 0.1f);
+        
         animationAction.init(animationName);
         return animationAction;
     }
-    public static AnimationAction getAnimationAction(Animator animator)
+    public void resolveState(Animator animator,AnimatorStateInfo stateInfo) {
+        for(int i=0;i< parameterResolver.Length; i++)
+        {
+            if (parameterResolver[i] == null) break;
+            parameterResolver[i].resolve(animator, stateInfo);
+           
+        }
+    }
+    public static void ResolveState(Animator animator, AnimatorStateInfo stateInfo)
+    {
+        AnimationManager.Get(animator).resolveState(animator, stateInfo);
+    }
+    public static AnimationManager Get(Animator animator)
     {
 
-        return animationActionTable[animator];
+        return animationManagerTable[animator];
     }
 }
