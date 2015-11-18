@@ -41,7 +41,6 @@ public class AnimationAction : Action
         throw new NotImplementedException();
     }
 }
-delegate void SetValueProxy(String name, object value);
 abstract class ParameterResolver
 {
     protected AnimatorControllerParameter parameter;
@@ -95,13 +94,19 @@ class IntegerParameterResolver : ParameterResolver
 }
 public class AnimationManager  {
 
-    static Dictionary<Animator, AnimationManager> animationManagerTable = new Dictionary<Animator, AnimationManager>();
+    //static Dictionary<Animator, AnimationManager> animationManagerTable = new Dictionary<Animator, AnimationManager>();
     Animator animator;
     ParameterResolver []parameterResolver=new ParameterResolver[20];//fixme magic number 20
     AnimationAction animationAction=new AnimationAction();
     public AnimationManager(Animator animator)
     {
         this.animator = animator;
+        AnimationBehaviour[] ab = animator.GetBehaviours<AnimationBehaviour>();
+        for (int i = 0; i < ab.Length; i++)
+        {
+            Debug.Log("b" + i);
+            ab[i].animationManager = this;
+        }
         AnimatorControllerParameter []parameters = animator.parameters;
         for (int i=0;i< parameters.Length&&i<20; i++)
         {
@@ -115,7 +120,7 @@ public class AnimationManager  {
             }
         }
 
-        animationManagerTable.Add(animator, this);
+       // animationManagerTable.Add(animator, this);
     }
     public Action playAnimationAtFrame(string animationName,int whichFrame, AtAnimationFrame atAnimationFrame)
     {
@@ -132,7 +137,7 @@ public class AnimationManager  {
         animationAction.init(animationName);
         return animationAction;
     }
-    public void resolveState(Animator animator,AnimatorStateInfo stateInfo) {
+    public void initState(Animator animator,AnimatorStateInfo stateInfo) {
         for(int i=0;i< parameterResolver.Length; i++)
         {
             if (parameterResolver[i] == null) break;
@@ -140,13 +145,13 @@ public class AnimationManager  {
            
         }
     }
-    public static void ResolveState(Animator animator, AnimatorStateInfo stateInfo)
+    public static void InitState(Animator animator, AnimatorStateInfo stateInfo)
     {
-        AnimationManager.Get(animator).resolveState(animator, stateInfo);
+        AnimationManager.Get(animator).initState(animator, stateInfo);
     }
     public static AnimationManager Get(Animator animator)
     {
 
-        return animationManagerTable[animator];
+        return UnitManager.getUnit(animator.gameObject).animationManager;
     }
 }

@@ -170,8 +170,8 @@ public class PlayerInteractor : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.Q))
         {
             // mc_animator.SetInteger("idle", 1);
-            //currentPlayerInfo.selectUnit.animator.SetInteger("attack",1);
-            currentPlayerInfo.selectUnit.animationManager.playAnimation("Run");
+            currentPlayerInfo.selectUnit.animator.SetInteger("Attack",1);
+            //currentPlayerInfo.selectUnit.animationManager.playAnimation("Run");
 
         }
         if (Input.GetKeyDown(KeyCode.W))

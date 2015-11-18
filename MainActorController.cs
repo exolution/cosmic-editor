@@ -10,7 +10,7 @@ public class MainActorController : MonoBehaviour
     Animator m_animator;
     Vector3 m_targetPoint;
     
-    public WeaponTrail myTrail;
+    //public WeaponTrail myTrail;
     public GameObject targetCircle;
     bool m_isIdle = true;
     private float t = 0.033f;
@@ -102,7 +102,6 @@ public class MainActorController : MonoBehaviour
             m_animator.SetBool("isIdle", true);
             m_animator.SetBool("isAttack", true);
             m_animator.SetBool("isWalk", false);
-
             m_targetPoint = transform.position + transform.forward * 0.5f;
             int n = 2;
             damageController.register(new Func<List<GameObject>> (() =>
@@ -145,31 +144,31 @@ public class MainActorController : MonoBehaviour
             Camera.main.transform.LookAt(transform);
         }
         //Camera.main.transform.LookAt(transform);
-        t = Mathf.Clamp(Time.deltaTime, 0, 0.066f);
+        //t = Mathf.Clamp(Time.deltaTime, 0, 0.066f);
 
-        if (t > 0)
-        {
-            while (tempT < t)
-            {
-                tempT += animationIncrement;
+        //if (t > 0)
+        //{
+        //    while (tempT < t)
+        //    {
+        //        tempT += animationIncrement;
 
-                if (myTrail.time > 0)
-                {
-                    myTrail.Itterate(Time.time - t + tempT);
-                }
-                else
-                {
-                    myTrail.ClearTrail();
-                }
-            }
+        //        if (myTrail.time > 0)
+        //        {
+        //            myTrail.Itterate(Time.time - t + tempT);
+        //        }
+        //        else
+        //        {
+        //            myTrail.ClearTrail();
+        //        }
+        //    }
 
-            tempT -= t;
+        //    tempT -= t;
 
-            if (myTrail.time > 0)
-            {
-                myTrail.UpdateTrail(Time.time, t);
-            }
-        }
+        //    if (myTrail.time > 0)
+        //    {
+        //        myTrail.UpdateTrail(Time.time, t);
+        //    }
+        //}
     }
 
     

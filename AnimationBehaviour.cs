@@ -4,12 +4,21 @@ using System.Collections;
 public class AnimationBehaviour : StateMachineBehaviour {
     float prev=0;
     int c = 4;
+    public AnimationManager animationManager;
     // OnStateEnter is called before OnStateEnter is called on any state inside this state machine
     override public void OnStateEnter(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
     {
         //Debug.Log(1 + "-" + stateInfo.fullPathHash + "-" + stateInfo.length + "-" + stateInfo.normalizedTime + "-" + (stateInfo.normalizedTime - prev));
         prev = stateInfo.normalizedTime;
-        AnimationManager.ResolveState(animator, stateInfo);
+        animationManager.initState(animator, stateInfo);
+        AnimationEvent ae = new AnimationEvent();
+        ae.functionName = "animationEvent";
+        
+        AnimatorTransitionInfo ati = animator.GetAnimatorTransitionInfo(layerIndex);
+        
+        AnimatorClipInfo aci = animator.GetCurrentAnimatorClipInfo(layerIndex)[0];
+        aci.clip.AddEvent(ae);
+        Debug.Log( "进入："+ aci.clip.name +"-"+ stateInfo.fullPathHash + "-" + stateInfo.length + "-" + stateInfo.normalizedTime + "-" + (stateInfo.normalizedTime - prev));
         //animator.SetInteger("idle",Random.Range(1, 3));
         //AnimationAction animationAction = AnimationManager.getAnimationAction(animator);
     }
@@ -17,21 +26,29 @@ public class AnimationBehaviour : StateMachineBehaviour {
     // OnStateUpdate is called before OnStateUpdate is called on any state inside this state machine
     override public void OnStateUpdate(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
     {
-        AnimatorClipInfo aci = animator.GetCurrentAnimatorClipInfo(layerIndex)[0];
-       
-        //Debug.Log(2 + "-" + stateInfo.fullPathHash+"-"+stateInfo.length+"-"+stateInfo.normalizedTime+"-"+ (stateInfo.normalizedTime-prev));
+        AnimatorTransitionInfo ati = animator.GetAnimatorTransitionInfo(layerIndex);
+        
+        AnimatorClipInfo []acis = animator.GetCurrentAnimatorClipInfo(layerIndex);
+        string acit = "";
+        foreach (AnimatorClipInfo aci in acis){
+            acit += "["+aci.weight + ":" + aci.clip.name+"],";
+        }
+        //Debug.Log(2 + "-[" + ati.normalizedTime + "]-["+animator.GetCurrentAnimatorClipInfo(layerIndex)[0].clip.name+ "]-["+stateInfo.normalizedTime+"]-"+ (stateInfo.normalizedTime-prev));
         prev = stateInfo.normalizedTime;
-        if (stateInfo.normalizedTime >= 0.9f)
+        Debug.Log("update:" + stateInfo.fullPathHash+"-"+acit+stateInfo.normalizedTime);
+        if (stateInfo.normalizedTime>0.8f)
         {
-           
-           // Debug.Break();
+           // Debug.Log(stateInfo.fullPathHash);
+            //animator.SetInteger("Attack", 0);
+           //Debug.Break();
         }
     }
 
     //OnStateExit is called before OnStateExit is called on any state inside this state machine
     override public void OnStateExit(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
     {
-
+        AnimatorClipInfo aci = animator.GetCurrentAnimatorClipInfo(layerIndex)[0];
+        Debug.Log("离开：" + aci.clip.name + "-" + stateInfo.fullPathHash + "-" + stateInfo.length + "-" + stateInfo.normalizedTime + "-" + (stateInfo.normalizedTime - prev));
 
         //Debug.Log(3 + "-" + stateInfo.fullPathHash + "-" + stateInfo.length + "-" + stateInfo.normalizedTime + "-" + (stateInfo.normalizedTime - prev));
         prev = stateInfo.normalizedTime;

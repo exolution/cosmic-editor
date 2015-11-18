@@ -43,7 +43,14 @@ public class Unit : MonoBehaviour
          PlayerInteractor.doMouseEnterUnit(this);
       
     }
-
+    public void animationEvent(AnimationEvent ae)
+    {
+        //Debug.Log(a);
+        //Debug.Log(b);
+        //Debug.Log(s);
+        //Debug.Log(sk);
+       
+    }
     void OnMouseExit()
     {
         
