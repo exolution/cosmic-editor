@@ -31,8 +31,13 @@ public class Unit : MonoBehaviour
     }
     void Update()
     {
-       
 
+        Debug.Log("update"+Time.realtimeSinceStartup);
+    }
+    void LateUpdate()
+    {
+
+        Debug.Log("late update" + Time.realtimeSinceStartup);
     }
     public void onclickGround(InteractionEvent interactionEvent)
     {

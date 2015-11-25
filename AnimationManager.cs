@@ -41,7 +41,7 @@ public class AnimationAction : Action
         throw new NotImplementedException();
     }
 }
-abstract class ParameterResolver
+abstract class AnimationStateParameter
 {
     protected AnimatorControllerParameter parameter;
     public virtual void resolve(Animator animator,AnimatorStateInfo stateInfo)
@@ -54,7 +54,7 @@ abstract class ParameterResolver
     }   
     protected abstract void setValue(Animator animator);
 }
-class BoolParameterResolver : ParameterResolver
+class BoolParameterResolver : AnimationStateParameter
 {
     protected override void setValue(Animator animator)
     {
@@ -65,7 +65,7 @@ class BoolParameterResolver : ParameterResolver
         this.parameter = parameter;
     }
 }
-class IntegerParameterResolver : ParameterResolver
+class IntegerParameterResolver : AnimationStateParameter
 {
     int max;
     int prev=1;
@@ -92,32 +92,86 @@ class IntegerParameterResolver : ParameterResolver
         animator.SetInteger(parameter.name, 0);
     }
 }
-public class AnimationManager  {
 
+abstract class AnimatorStateProxy
+{
+    public AnimatorControllerParameter stateParameter {
+        get;
+        protected set;
+    }
+    public string name
+    {
+        get;
+        protected set;
+    }
+    protected const string BASE_LAYER_NAME = "Base";
+    public static Dictionary<int, AnimatorStateProxy> animationStates = new Dictionary<int, AnimatorStateProxy>();
+    public AnimatorStateProxy(AnimatorControllerParameter stateParameter)
+    {
+        this.stateParameter = stateParameter;
+    }
+    public abstract void onEnterState(AnimationManager animationManager, AnimatorStateInfo stateInfo);
+}
+class AnimatorSingleStateProxy : AnimatorStateProxy
+{
+    public override void onEnterState(AnimationManager animationManager, AnimatorStateInfo stateInfo)
+    {
+        throw new NotImplementedException();
+    }
+    public  AnimatorSingleStateProxy(AnimatorControllerParameter parameter) 
+        : base(parameter)
+    {
+        for (int i = 1; i <= parameter.defaultInt; i++) {
+            AnimatorStateProxy.animationStates.Add(Animator.StringToHash(BASE_LAYER_NAME + "." +parameter.name+i),this);
+        }
+    }
+}
+class AnimatorSequnceStateProxy : AnimatorStateProxy
+{
+    public override void onEnterState(AnimationManager animationManager, AnimatorStateInfo stateInfo)
+    {
+        throw new NotImplementedException();
+    }
+    public AnimatorSequnceStateProxy(AnimatorControllerParameter parameter) 
+        : base(parameter)
+    {
+        for (int i = 1; i <= parameter.defaultInt; i++)
+        {
+            AnimatorStateProxy.animationStates.Add(Animator.StringToHash(BASE_LAYER_NAME + "." + parameter.name + i), this);
+        }
+        name = parameter.name.Split('.')[0];
+    }
+}
+
+
+public class AnimationManager  {
+   
     //static Dictionary<Animator, AnimationManager> animationManagerTable = new Dictionary<Animator, AnimationManager>();
     Animator animator;
-    ParameterResolver []parameterResolver=new ParameterResolver[20];//fixme magic number 20
     AnimationAction animationAction=new AnimationAction();
     public AnimationManager(Animator animator)
     {
         this.animator = animator;
-        AnimationBehaviour[] ab = animator.GetBehaviours<AnimationBehaviour>();
-        for (int i = 0; i < ab.Length; i++)
+
+        //set animationManager instance to every animationBehaviour;
+        AnimationBehaviour[] animationBehaviour = animator.GetBehaviours<AnimationBehaviour>();
+        for (int i = 0; i < animationBehaviour.Length; i++)
         {
-            Debug.Log("b" + i);
-            ab[i].animationManager = this;
+            animationBehaviour[i].animationManager = this;
         }
+
         AnimatorControllerParameter []parameters = animator.parameters;
         for (int i=0;i< parameters.Length&&i<20; i++)
         {
-            if (parameters[i].type == AnimatorControllerParameterType.Bool)
-            {
-                parameterResolver[i] = new BoolParameterResolver(parameters[i]);
-            }
-            else if (parameters[i].type == AnimatorControllerParameterType.Int)
-            {
-                parameterResolver[i] = new IntegerParameterResolver(parameters[i],animator);
-            }
+            //animationStates.Add(Animator.StringToHash(BASE_LAYER_NAME+"."+))
+            //if (parameters[i].type == AnimatorControllerParameterType.Bool)
+            //{
+            //    parameterResolver[i] = new BoolParameterResolver(parameters[i]);
+            //}
+            //else if (parameters[i].type == AnimatorControllerParameterType.Int)
+            //{
+            //    parameterResolver[i] = new IntegerParameterResolver(parameters[i],animator);
+            //}
         }
 
        // animationManagerTable.Add(animator, this);
@@ -138,12 +192,12 @@ public class AnimationManager  {
         return animationAction;
     }
     public void initState(Animator animator,AnimatorStateInfo stateInfo) {
-        for(int i=0;i< parameterResolver.Length; i++)
-        {
-            if (parameterResolver[i] == null) break;
-            parameterResolver[i].resolve(animator, stateInfo);
+        //for(int i=0;i< parameterResolver.Length; i++)
+        //{
+        //    if (parameterResolver[i] == null) break;
+        //    parameterResolver[i].resolve(animator, stateInfo);
            
-        }
+        //}
     }
     public static void InitState(Animator animator, AnimatorStateInfo stateInfo)
     {

@@ -8,9 +8,10 @@ public class AnimationBehaviour : StateMachineBehaviour {
     // OnStateEnter is called before OnStateEnter is called on any state inside this state machine
     override public void OnStateEnter(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
     {
-        //Debug.Log(1 + "-" + stateInfo.fullPathHash + "-" + stateInfo.length + "-" + stateInfo.normalizedTime + "-" + (stateInfo.normalizedTime - prev));
+        Debug.Log(1 + "-" + stateInfo.fullPathHash + "-" + Animator.StringToHash("Base.Idle.idle1")+"-"+ stateInfo.length + "-" + stateInfo.normalizedTime + "-" + (stateInfo.normalizedTime - prev));
         prev = stateInfo.normalizedTime;
-        animationManager.initState(animator, stateInfo);
+        
+        //  animationManager.initState(animator, stateInfo);
         AnimationEvent ae = new AnimationEvent();
         ae.functionName = "animationEvent";
         
@@ -26,6 +27,7 @@ public class AnimationBehaviour : StateMachineBehaviour {
     // OnStateUpdate is called before OnStateUpdate is called on any state inside this state machine
     override public void OnStateUpdate(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
     {
+        Debug.Break();
         AnimatorTransitionInfo ati = animator.GetAnimatorTransitionInfo(layerIndex);
         
         AnimatorClipInfo []acis = animator.GetCurrentAnimatorClipInfo(layerIndex);
